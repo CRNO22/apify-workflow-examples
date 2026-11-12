@@ -30,6 +30,7 @@ for(const kind of Object.keys(headers)){
 if(!/^[a-zA-Z0-9_-]{20,}$/.test(c.spreadsheetId)||c.spreadsheetId.startsWith('REPLACE_'))throw new Error('Set your Google spreadsheet ID before starting a billed Actor run.');
 if(!c.sheetTab||!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,60}$/.test(c.historyStoreName))throw new Error('Set the sheet tab and a valid history store name.');
 if(!Number.isInteger(c.maxItems)||c.maxItems<1||c.maxItems>${olive?100:1000})throw new Error('maxItems is outside the supported range.');
+${olive?"if(c.maxItems!==100)throw new Error('This comparison workflow requires maxItems=100 to collect the complete ranking and save its baseline.');":''}
 if(typeof c.maxChargeUsd!=='number'||c.maxChargeUsd<c.maxItems*0.002||c.maxChargeUsd>10)throw new Error('Set maxChargeUsd between maxItems * $0.002 and $10.');
 ${olive?'':`if(!c.boardUrls?.trim())throw new Error('Set at least one supported job-board URL.');
 ${normalizeBoardsCode}

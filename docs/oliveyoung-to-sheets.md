@@ -20,11 +20,11 @@ Google Sheets writes use RAW cell values. Source strings are not interpreted as 
 
 ## Costs and safe retries
 
-Default `maxItems=100` and `maxChargeUsd=0.25`; at the current $0.002 per delivered row, 100 rows have $0.20 in result fees. The configuration check rejects a budget below `maxItems × $0.002`. Increasing limits increases potential cost. n8n hosting and later account storage/API usage have separate pricing.
+Default `maxItems=100` and `maxChargeUsd=0.25`; at the current $0.002 per delivered row, 100 rows have $0.20 in result fees. The configuration check rejects a budget below `maxItems × $0.002`. Keep `maxItems=100`: stopping at a smaller number marks the ranking as partial and prevents a comparison baseline. The template rejects smaller limits before starting a billed run. n8n hosting and later account storage/API usage have separate pricing.
 
 The POST that starts a run is **not automatically retried**. Read-only requests may retry. A successful Actor run can advance its change baseline before a downstream Sheets or email failure. In that case, recover the **existing run's dataset** using its run ID from execution data; retry/replay from **Read saved dataset** with that dataset ID instead of starting a new Actor run. The same `recordKey` is upserted. Do not rerun the whole workflow as a substitute for recovering unsaved results.
 
-If email was sent but the execution status is uncertain, inspect the email provider before retrying its node: exactly-once email delivery is not guaranteed. Enable n8n execution saving/error alerts in your own instance as appropriate. Avoid overlapping executions sharing one history store.
+Enable n8n execution saving/error alerts in your own instance as appropriate. Avoid overlapping executions sharing one history store.
 
 A failed, timed-out, aborted, partial or budget-limited run stops before writing Sheets. Inspect `SUMMARY` and the existing dataset in Apify. Fix the cause before another run. Source access or schemas can change.
 

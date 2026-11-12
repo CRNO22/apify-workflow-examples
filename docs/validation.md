@@ -5,7 +5,9 @@
 - Workflow Code nodes were executed against controlled fixtures. JSON request expressions were parsed and evaluated against representative settings.
 - Google Sheets appendOrUpdate, RAW values and resource-mapper settings were checked against n8n's official node source. HTTP Request and SMTP settings were likewise checked against official node definitions.
 - Live read-only checks returned three jobs each from Greenhouse (Figma), Lever (Palantir) and Ashby (OpenAI) on 12 November 2026.
-- Direct URL input in the Actor itself is awaiting release; the public n8n template already normalizes URLs to the existing input format.
+- Both Actors were deployed as build 1.0.5 on 12 November 2026. Direct job-board URL input passed a cloud run; repeating with the legacy input reused its history and delivered/charged zero unchanged records.
+- Olive Young collected 100 rows with a successful summary and 100 matching product events. A 3-row limit correctly yielded partial output; the comparison template now requires maxItems=100 before starting a run.
+- The workflow projection code processed the real cloud datasets (100 products and 3 jobs) and produced unique, complete Sheets rows.
 - Samples come from successful historical Actor runs on 7 November 2026; the dates are labelled explicitly.
 
 ## Setup still belongs to each workflow user

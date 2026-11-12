@@ -24,6 +24,7 @@ for(const kind of Object.keys(workflows)){
  });
  test(`${kind}: invalid configuration fails before starting an Actor`,()=>{
   assert.equal(run(kind,'Validate settings',[settings])[0].json.spreadsheetId,settings.spreadsheetId);
+  if(kind==='oliveyoung')assert.throws(()=>run(kind,'Validate settings',[{...settings,maxItems:20}]));
   for(const bad of [{spreadsheetId:'REPLACE_WITH_YOUR_SPREADSHEET_ID'},{maxItems:0},{maxChargeUsd:0.01},{maxChargeUsd:99},{historyStoreName:'../bad'}])assert.throws(()=>run(kind,'Validate settings',[{...settings,...bad}]));
  });
  test(`${kind}: failures, partial results and expired polling stop output`,()=>{
