@@ -1,0 +1,721 @@
+{
+  "name": "Greenhouse Lever Ashby job changes to Sheets and email",
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Manual test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "schedule",
+      "name": "Daily at 09 UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "settings",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "spreadsheetId",
+              "name": "spreadsheetId",
+              "value": "REPLACE_WITH_YOUR_SPREADSHEET_ID",
+              "type": "string"
+            },
+            {
+              "id": "sheetTab",
+              "name": "sheetTab",
+              "value": "JobsHistory",
+              "type": "string"
+            },
+            {
+              "id": "historyStoreName",
+              "name": "historyStoreName",
+              "value": "n8n-jobs-history-v1",
+              "type": "string"
+            },
+            {
+              "id": "maxItems",
+              "name": "maxItems",
+              "value": 100,
+              "type": "number"
+            },
+            {
+              "id": "maxChargeUsd",
+              "name": "maxChargeUsd",
+              "value": 0.25,
+              "type": "number"
+            },
+            {
+              "id": "boardUrls",
+              "name": "boardUrls",
+              "value": "https://job-boards.greenhouse.io/figma",
+              "type": "string"
+            },
+            {
+              "id": "keyword",
+              "name": "keyword",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "sendEmail",
+              "name": "sendEmail",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "emailFrom",
+              "name": "emailFrom",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "emailTo",
+              "name": "emailTo",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "validate-settings",
+      "name": "Validate settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c=$input.first().json;\nif(!/^[a-zA-Z0-9_-]{20,}$/.test(c.spreadsheetId)||c.spreadsheetId.startsWith('REPLACE_'))throw new Error('Set your Google spreadsheet ID before starting a billed Actor run.');\nif(!c.sheetTab||!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,60}$/.test(c.historyStoreName))throw new Error('Set the sheet tab and a valid history store name.');\nif(!Number.isInteger(c.maxItems)||c.maxItems<1||c.maxItems>1000)throw new Error('maxItems is outside the supported range.');\nif(typeof c.maxChargeUsd!=='number'||c.maxChargeUsd<c.maxItems*0.002||c.maxChargeUsd>10)throw new Error('Set maxChargeUsd between maxItems * $0.002 and $10.');\nif(!c.boardUrls?.trim())throw new Error('Set at least one supported job-board URL.');\n\nc.boards=[...new Set(c.boardUrls.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean).map(value=>{\n if(/^(greenhouse|lever|lever-eu|ashby):[A-Za-z0-9_-]+$/.test(value))return value;\n const match=/^https:\\/\\/(boards\\.greenhouse\\.io|job-boards\\.greenhouse\\.io|jobs\\.lever\\.co|jobs\\.eu\\.lever\\.co|jobs\\.ashbyhq\\.com)\\/([A-Za-z0-9_-]+)(?:\\/[A-Za-z0-9_-]+)*\\/?(?:[?#][^\\\\]*)?$/i.exec(value);\n if(!match||match[2]==='embed')throw new Error('Use a direct supported HTTPS board URL, such as https://job-boards.greenhouse.io/figma, or provider:slug.');\n const providers={'boards.greenhouse.io':'greenhouse','job-boards.greenhouse.io':'greenhouse','jobs.lever.co':'lever','jobs.eu.lever.co':'lever-eu','jobs.ashbyhq.com':'ashby'};\n return providers[match[1].toLowerCase()]+':'+match[2];\n}))];\nif(c.boards.length>20)throw new Error('Select at most 20 boards.');\n\nif(c.sendEmail&&(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(c.emailTo)||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(c.emailFrom)))throw new Error('Set valid sender and recipient addresses before enabling email.');\nreturn [{json:c}];",
+        "mode": "runOnceForAllItems"
+      }
+    },
+    {
+      "id": "start-actor",
+      "name": "Start Actor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/cemented_jest~ats-jobs-change-monitor/runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
+        "method": "POST",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "waitForFinish",
+              "value": "60"
+            },
+            {
+              "name": "timeout",
+              "value": "180"
+            },
+            {
+              "name": "memory",
+              "value": "256"
+            },
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "={{ $json.maxChargeUsd }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({boards:$json.boards,keyword:$json.keyword,maxItems:$json.maxItems,trackChanges:true,historyStoreName:$json.historyStoreName,onlyChanges:true}) }}"
+      }
+    },
+    {
+      "id": "validate-run",
+      "name": "Validate run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const r=$input.first().json.data;\nif(!r?.id||!r.status)throw new Error('Apify did not return a run.');\nif(['FAILED','ABORTED','TIMED-OUT'].includes(r.status))throw new Error('Actor '+r.status+'. Inspect https://console.apify.com/actors/runs/'+r.id);\nif(!['SUCCEEDED','READY','RUNNING','TIMING-OUT','ABORTING'].includes(r.status))throw new Error('Unexpected run status '+r.status);\nif(r.status!=='SUCCEEDED'&&Date.now()-Date.parse(r.startedAt)>360000)throw new Error('Run polling deadline exceeded. Inspect the existing run; do not start a duplicate.');\nreturn [{json:{run:r}}];",
+        "mode": "runOnceForAllItems"
+      }
+    },
+    {
+      "id": "run-finished",
+      "name": "Run finished?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "succeeded",
+              "leftValue": "={{ $json.run.status }}",
+              "rightValue": "SUCCEEDED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wait",
+      "name": "Wait 10 seconds",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        250
+      ],
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "read-existing-run",
+      "name": "Read existing run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        250
+      ],
+      "parameters": {
+        "url": "=https://api.apify.com/v2/actor-runs/{{ $json.run.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "read-run-summary",
+      "name": "Read run summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.apify.com/v2/key-value-stores/{{ $json.run.defaultKeyValueStoreId }}/records/SUMMARY",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "require-complete-output",
+      "name": "Require complete output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const s=$input.first().json;\nif(s.status!=='succeeded')throw new Error('Run summary is '+s.status+'. Partial or budget-limited results were not written to Sheets. Inspect the existing run.');\nreturn [{json:{run:$('Validate run').first().json.run}}];",
+        "mode": "runOnceForAllItems"
+      }
+    },
+    {
+      "id": "read-saved-dataset",
+      "name": "Read saved dataset",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "url": "=https://api.apify.com/v2/datasets/{{ $json.run.defaultDatasetId }}/items?format=json&clean=true&limit=1000",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "prepare-sheet-rows",
+      "name": "Prepare sheet rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const rows=$input.all().flatMap(x=>Array.isArray(x.json)?x.json:[x.json]);\nconst seen=new Set();\nreturn rows.map(r=>{\n if(!r.runId||!r.id)throw new Error('Missing stable output identity.');\n const row={recordKey:[r.runId,r.source,r.id].join(':'),observedAt:r.observedAt,source:r.source,id:r.id,board:r.board,title:r.title,location:r.location,departments:(r.departments??[]).join('; '),changeType:r.changeType,changedFields:(r.changedFields??[]).join('; '),url:r.url,runId:r.runId};\n for(const k of Object.keys(row))if(row[k]===null||row[k]===undefined)row[k]='';\n return {json:row};\n}).filter(x=>{if(seen.has(x.json.recordKey))return false;seen.add(x.json.recordKey);return true;});",
+        "mode": "runOnceForAllItems"
+      }
+    },
+    {
+      "id": "sheets",
+      "name": "Save history in Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $(\"Settings\").first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $(\"Settings\").first().json.sheetTab }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "recordKey"
+          ],
+          "schema": [
+            {
+              "id": "recordKey",
+              "displayName": "recordKey",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "observedAt",
+              "displayName": "observedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "board",
+              "displayName": "board",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "departments",
+              "displayName": "departments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "changeType",
+              "displayName": "changeType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "changedFields",
+              "displayName": "changedFields",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "handlingExtraData": "error"
+        }
+      }
+    },
+    {
+      "id": "prepare-optional-alert",
+      "name": "Prepare optional alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const c=$('Settings').first().json;\nif(!c.sendEmail)return [];\nconst rows=$('Prepare sheet rows').all().map(x=>x.json).filter(r=>['new','changed'].includes(r.changeType));\nif(!rows.length)return [];\nconst clean=x=>String(x??'').replace(/[\\r\\n]+/g,' ').slice(0,250);\nconst lines=rows.slice(0,50).map(r=>[clean(r.changeType)+': '+clean(r.title)+' — '+clean(r.location),clean(r.url)].join('\\n'));\nreturn [{json:{subject:'Job monitor: '+rows.length+' new or changed postings',text:lines.join('\\n\\n')+'\\n\\nFull history: https://docs.google.com/spreadsheets/d/'+c.spreadsheetId+'\\nNew means first seen in this monitored selection; it does not prove the posting was just published.'}}];",
+        "mode": "runOnceForAllItems"
+      }
+    },
+    {
+      "id": "email",
+      "name": "Send optional email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "={{ $(\"Settings\").first().json.emailFrom }}",
+        "toEmail": "={{ $(\"Settings\").first().json.emailTo }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "instructions",
+      "name": "Read before enabling",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -430
+      ],
+      "parameters": {
+        "width": 1000,
+        "height": 350,
+        "content": "## Greenhouse, Lever & Ashby job changes\n1. Import this workflow. It is inactive.\n2. Configure Settings; create the named Google Sheets tab with the supplied CSV headers.\n3. On every HTTP node, select the SAME Header Auth credential: Authorization = Bearer YOUR_APIFY_TOKEN. Never paste a token into the workflow JSON.\n4. Select your Google Sheets credential. Email is optional and disabled by default; configure SMTP + addresses before enabling it.\n5. Run manually, inspect saved rows, then enable the daily schedule (09:00 UTC).\n6. First run is a baseline. Later runs compare the same input and history. Avoid overlapping executions.\nDefault result fee: up to $0.20 per run; explicit $0.25 run cap. Separate n8n/account storage costs may apply. If saving fails, retry from Read saved dataset for the SAME run, because Actor history has already advanced.\nGuide: https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/jobs-to-sheets.md"
+      }
+    }
+  ],
+  "connections": {
+    "Manual test": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily at 09 UTC": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Validate settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate settings": {
+      "main": [
+        [
+          {
+            "node": "Start Actor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Actor": {
+      "main": [
+        [
+          {
+            "node": "Validate run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate run": {
+      "main": [
+        [
+          {
+            "node": "Run finished?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run finished?": {
+      "main": [
+        [
+          {
+            "node": "Read run summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 10 seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10 seconds": {
+      "main": [
+        [
+          {
+            "node": "Read existing run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read existing run": {
+      "main": [
+        [
+          {
+            "node": "Validate run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read run summary": {
+      "main": [
+        [
+          {
+            "node": "Require complete output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require complete output": {
+      "main": [
+        [
+          {
+            "node": "Read saved dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read saved dataset": {
+      "main": [
+        [
+          {
+            "node": "Prepare sheet rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare sheet rows": {
+      "main": [
+        [
+          {
+            "node": "Save history in Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save history in Sheets": {
+      "main": [
+        [
+          {
+            "node": "Prepare optional alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare optional alert": {
+      "main": [
+        [
+          {
+            "node": "Send optional email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Etc/UTC",
+    "executionTimeout": 600,
+    "saveExecutionProgress": true
+  },
+  "pinData": {},
+  "tags": []
+}
