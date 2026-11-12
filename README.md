@@ -1,42 +1,31 @@
-# Apify workflows for K-beauty research and job-board monitoring
+# Olive Young and job-board workflows for n8n
 
-Two importable n8n workflows from CRNO, the developer of the linked Apify Actors. Preview dated output samples before creating or running anything. The workflow files contain no API keys, account credentials or recipient addresses.
+Save Olive Young Global prices and ranks to Google Sheets, or follow job postings from selected Greenhouse, Lever and Ashby boards.
 
-| Your task | What you get | Start here |
-| --- | --- | --- |
-| Track Olive Young Global bestseller prices and ranks | Dated Google Sheets history with previous/current prices and ranks | [Setup guide](docs/oliveyoung-to-sheets.md) · [Workflow JSON](workflows/oliveyoung-to-sheets.json) · [5-row CSV](samples/oliveyoung-sample.csv) |
-| Monitor selected Greenhouse, Lever and Ashby boards | New/changed postings in Sheets, plus an optional email digest | [Setup guide](docs/jobs-to-sheets.md) · [Workflow JSON](workflows/jobs-to-sheets.json) · [5-row CSV](samples/jobs-sample.csv) |
+| Workflow | Files |
+| --- | --- |
+| Olive Young prices and ranks → Sheets | [Guide](docs/oliveyoung-to-sheets.md) · [Workflow JSON](workflows/oliveyoung-to-sheets.json) · [Sample CSV](samples/oliveyoung-sample.csv) |
+| Job changes → Sheets and optional email | [Guide](docs/jobs-to-sheets.md) · [Workflow JSON](workflows/jobs-to-sheets.json) · [Sample CSV](samples/jobs-sample.csv) |
 
-## What it costs
+The templates are free to download. You’ll need your own Apify, n8n and Google Sheets accounts. Import a workflow, connect your credentials and run a manual test before enabling its daily schedule. [Setup and troubleshooting](docs/setup.md).
 
-The workflow templates and dated samples are free to download. Running the linked Actors is priced at **$2 per 1,000 delivered rows** as of 12 November 2026. The default template selects at most 100 rows and sets a **$0.25 maximum Actor charge**. At the stated rate, 100 delivered rows have $0.20 in result fees. Account-level storage/API usage, n8n hosting and email services can have separate costs. Check each Actor's pricing tab before running.
+## Cost
+
+Both Actors charge **$2 per 1,000 saved rows**: 100 results cost **$0.20**. The templates start with a $0.25 run cap. n8n hosting, email and later Apify account storage/API use may cost extra. Rates checked on 12 November 2026; the Actor pricing tabs show the current prices.
 
 - [Olive Young Global Actor](https://apify.com/cemented_jest/oliveyoung-global-bestsellers)
 - [Greenhouse, Lever & Ashby Actor](https://apify.com/cemented_jest/ats-jobs-change-monitor)
 
-## How these workflows behave
+## What the samples show
 
-1. You configure your spreadsheet and credentials, then run a manual test.
-2. The workflow starts one bounded Actor run and polls that same run until it finishes.
-3. Only successful runs with a complete `SUMMARY` proceed to Sheets.
-4. Rows use a stable `recordKey` for **the same run**, so retrying the Sheets write updates those rows instead of inserting a second copy. New runs intentionally add dated history.
-5. The first comparison run is a baseline. The job template sends no baseline email. Later `new` and `changed` rows can trigger one digest, after Sheets succeeds.
-6. Schedules are inactive until you enable the workflow. The included schedule is daily at 09:00 UTC. Avoid overlapping runs using the same history store.
+The CSVs contain five rows collected on **7 November 2026 UTC**. They show the output format, not current prices or available jobs.
 
-## Data scope
+Olive Young data covers Global bestseller listings, not sales volume or the full catalog. Job data covers only the companies and result limit you select. A newly seen posting may be older; a missing one is not automatically a closed job.
 
-Olive Young covers **Global bestseller rankings**, up to 100 rows per selected category. It does not provide Korean-store sales, units sold, full catalogs or review text. Job collection covers the boards you select and a bounded result window; newly seen is not necessarily newly published, and disappearance does not prove a job closed.
+## Testing and support
 
-The sample files were collected on **7 November 2026 UTC** and illustrate field layout. They are not current prices or live job availability. This project is independent of Olive Young, Greenhouse, Lever and Ashby.
+Actor collection and the workflow’s data-handling code have been tested. Live writes to your Google Sheet and SMTP delivery still need to be tested after you connect your accounts. See [test results](docs/validation.md).
 
-## Credentials and incident recovery
+Open a repository issue for template problems, or an Actor issue for collection problems. Include the run ID and relevant input, but no credentials.
 
-Create a credential in n8n of type **Header Auth** with header name `Authorization` and value `Bearer YOUR_APIFY_TOKEN`. Select that credential on all four HTTP Request nodes. Never paste the token into the shared workflow JSON. Connect your own Google Sheets credential; SMTP is needed only if you enable optional job emails.
-
-After an Apify token rotation, update that n8n credential once. Reconnect any revoked OAuth integration in its own account settings. These templates contain placeholders only and do not distribute the maintainer's tokens.
-
-## Validation and support
-
-See [validation notes](docs/validation.md) for what has and has not been tested. Report template problems in this repository's Issues. Report Actor data problems in the Actor's Issues with a run link and non-sensitive input; do not include tokens.
-
-Templates and documentation are released under the MIT license. Source-site records remain attributed to their sources; the code license does not grant rights over third-party data.
+Maintained by CRNO, the developer of the linked Actors. This project is independent of Olive Young and the job-board providers. Templates and docs use the MIT license; source data keeps its original rights.

@@ -1,19 +1,17 @@
-# Public launch copy
+# Posts for sharing the workflows
 
-These drafts are written by the Actor developer and make no customer or revenue claims.
+## K-beauty sourcing
 
-## K-beauty sourcing and brand research
+I’ve published an n8n workflow that saves Olive Young Global’s top 100 products to Google Sheets, including prices, brands and ranks. After the first run, it also shows price and rank changes.
 
-I made a small workflow for teams tracking Olive Young Global bestseller prices and ranks. It saves dated snapshots to Google Sheets and includes previous/current prices and rank changes after the first baseline run.
+You can check a five-row CSV before running it. The template is free; collecting 100 results costs $0.20 at the current Actor rate. It covers the Global storefront. Bestseller ranks are not sales figures.
 
-There is a 5-row CSV to inspect before signing up and an importable n8n template. Global storefront only; rankings are not sales volume. The template is free to download; the default 100-row Actor run has $0.20 in result fees at the current rate.
+I’m the developer of the Actor. Sample and setup: [Olive Young → Sheets](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/oliveyoung-to-sheets.md).
 
-Guide and sample: https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/oliveyoung-to-sheets.md
+## Job boards and automation
 
-## Job-board operators and automation builders
+This n8n workflow follows company job boards on Greenhouse, Lever and Ashby. Paste the board URLs, connect a Google Sheet, and it saves new and changed postings on later runs. Email alerts are optional; the first run just sets the baseline.
 
-I published an n8n workflow for monitoring selected Greenhouse, Lever and Ashby job boards. Paste board URLs, save baseline/new/changed postings to Google Sheets, and optionally email a digest after later changes.
+The template and sample CSV are free. Actor runs cost $2 per 1,000 saved rows. “New” means first seen by the monitor, so it can include older postings.
 
-The first run establishes the baseline and sends no email. The sample and template are free to download; Actor runs are usage-priced. New means newly seen in the monitored selection, not a guarantee that a job was just posted.
-
-Guide and sample: https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/jobs-to-sheets.md
+I’m the developer of the Actor. Workflow and setup: [Job boards → Sheets and email](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/jobs-to-sheets.md).
