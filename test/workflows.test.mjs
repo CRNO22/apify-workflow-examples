@@ -70,3 +70,9 @@ test('workflow accepts board URLs before the Actor URL-input release and rejects
  assert.deepEqual(run('jobs','Validate settings',[c])[0].json.boards,['greenhouse:figma','lever:palantir','ashby:openai']);
  for(const boardUrls of ['https://example.com/foo','http://jobs.lever.co/foo','https://jobs.lever.co@evil.com/foo','https://jobs.lever.co/foo/../bar','https://jobs.lever.co/foo/%2e%2e','https://boards.greenhouse.io/embed/job_board?for=figma'])assert.throws(()=>run('jobs','Validate settings',[{...settings,boardUrls}]));
 });
+
+test('job board limit matches the Actor and rejects overflow before billing',()=>{
+ const boards=Array.from({length:10},(_,i)=>'greenhouse:company'+i);
+ assert.equal(run('jobs','Validate settings',[{...settings,boardUrls:boards.join('\n')}])[0].json.boards.length,10);
+ assert.throws(()=>run('jobs','Validate settings',[{...settings,boardUrls:[...boards,'ashby:extra'].join('\n')}]));
+});

@@ -5,7 +5,9 @@ Checked on **12 November 2026**.
 | Check | Result |
 | --- | --- |
 | Actor regression tests | 38 passed: URL parsing, history compatibility, duplicate inputs and rejection of unsupported URLs |
-| Workflow tests | 12 passed: connections, settings, charge limits, failed-run handling, sheet rows and optional alerts |
+| n8n import | Both JSON files imported successfully into a fresh local n8n 2.47.5 database; schedules remain inactive |
+| n8n setup guard | Executing the jobs template with the placeholder sheet ID stopped at Validate settings, before any Actor request |
+| Workflow tests | 13 passed: connections, settings, charge limits, failed-run handling, sheet rows and optional alerts |
 | Public provider APIs | Three jobs collected from each of Greenhouse/Figma, Lever/Palantir and Ashby/OpenAI |
 | Actor runtime | Build 1.0.5 passed cloud collection checks; 1.0.6 changes the README only |
 | Job URL compatibility | URL run collected 3 jobs; a repeat with the old input reused history and saved/charged 0 unchanged jobs |
@@ -14,7 +16,9 @@ Checked on **12 November 2026**.
 
 A 3-product Olive Young run correctly reported partial results. The comparison template now requires the full 100-row limit before starting. Sample CSVs are dated 7 November 2026.
 
-The copy edit also passed checks for local links, JSON examples and both five-row preview tables. Workflow changes are limited to the setup note; executable nodes and connections are unchanged.
+The copy edit also passed checks for local links, JSON examples and both five-row preview tables. The submission preparation adds canvas setup and section notes, and aligns the job-board input limit with the Actor’s 10-board limit.
+
+Four additional public presets passed cloud runs: skincare (100 products), suncare (100 products), Figma design (17 jobs) and OpenAI (20 jobs). Each run had a successful summary and matching saved-row/result-event counts. All four public pages returned HTTP 200. [Examples and dated samples](examples.md).
 
 ## Not yet tested
 

@@ -14,7 +14,7 @@ c.boards=[...new Set(c.boardUrls.split(/\r?\n/).map(x=>x.trim()).filter(Boolean)
  const providers={'boards.greenhouse.io':'greenhouse','job-boards.greenhouse.io':'greenhouse','jobs.lever.co':'lever','jobs.eu.lever.co':'lever-eu','jobs.ashbyhq.com':'ashby'};
  return providers[match[1].toLowerCase()]+':'+match[2];
 }))];
-if(c.boards.length>20)throw new Error('Select at most 20 boards.');
+if(c.boards.length>10)throw new Error('Select at most 10 boards.');
 `;
 const code=(name,jsCode,x,y)=>({id:name.toLowerCase().replaceAll(' ','-'),name,type:'n8n-nodes-base.code',typeVersion:2,position:[x,y],parameters:{jsCode,mode:'runOnceForAllItems'}});
 const http=(name,url,x,y,extra={})=>({id:name.toLowerCase().replaceAll(' ','-'),name,type:'n8n-nodes-base.httpRequest',typeVersion:4.2,position:[x,y],parameters:{url,authentication:'genericCredentialType',genericAuthType:'httpHeaderAuth',options:{timeout:90000,response:{response:{responseFormat:'json'}}},...extra}});
@@ -79,7 +79,25 @@ return [{json:{subject:'Job monitor: '+rows.length+' new or changed postings',te
   link('Save history in Sheets','Prepare optional alert');link('Prepare optional alert','Send optional email');
  }
  for(const n of nodes)if(n.type==='n8n-nodes-base.httpRequest'&&n.name!=='Start Actor'){n.retryOnFail=true;n.maxTries=3;n.waitBetweenTries=2000;}
- nodes.push({id:'instructions',name:'Read before enabling',type:'n8n-nodes-base.stickyNote',typeVersion:1,position:[0,-430],parameters:{width:1000,height:350,content:`## ${olive?'Olive Young → Sheets':'Job boards → Sheets and email'}\nCreate the sheet tab with the supplied headers, then fill in Settings. Select your Apify Header Auth credential on all four HTTP nodes and connect Google Sheets. Keep tokens in credentials, not this JSON.\n\nRun a manual test before enabling the daily schedule (09:00 UTC). The first run sets the comparison baseline. ${olive?'Keep maxItems at 100 for a complete ranking.':'Email is off by default; add SMTP and addresses if you want alerts.'}\n\n100 saved rows cost $0.20; the default run cap is $0.25. Other service/account charges may apply. If a sheet write fails, recover that run’s saved dataset before collecting again.\n\n[Setup guide](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/${kind}-to-sheets.md)`}});
+ const note=(id,name,content,x,y,width,height,color)=>({id,name,type:'n8n-nodes-base.stickyNote',typeVersion:1,position:[x,y],parameters:{content,width,height,color}});
+ nodes.push(note('instructions','Read before enabling',`### How it works
+${olive?'Record Olive Young Global bestseller prices and ranks in a Google Sheet.':'Follow selected Greenhouse, Lever and Ashby job boards in a Google Sheet.'} Run manually or once a day at 09:00 UTC. The workflow starts an Apify Actor, waits for it to finish, rejects incomplete output, then saves rows by a stable key. Repeating a sheet write for the same run updates those rows.
+
+The first run sets the comparison baseline. ${olive?'Later runs compare the same ranking. This covers Global listing prices, not Korean-store prices or sales volume.':'Later runs save newly seen or changed postings. Newly seen does not mean newly published; missing jobs are not classified as closed.'}
+
+### Setup
+1. Use your own Apify, n8n and Google Sheets accounts. Create a sheet tab with the [supplied headers](https://github.com/CRNO22/apify-workflow-examples/blob/main/samples/${kind}-sheet-headers.csv).
+2. Fill in Settings: spreadsheet ID, tab and a unique history-store name. ${olive?'Keep maxItems at 100 for a complete ranking.':'Set boardUrls to supported career-page URLs, one per line (up to 10).'}
+3. Select an Apify Header Auth credential on all four HTTP nodes: Authorization = Bearer YOUR_TOKEN. Connect Google Sheets OAuth.
+4. Run manually and inspect the saved rows before enabling the schedule. 100 saved rows cost $0.20; the default cap is $0.25. Other account charges may apply.
+
+### Customization
+${olive?'Change the schedule to suit your reporting cycle.':'Add a keyword filter. Email is off by default; configure SMTP and sender/recipient addresses before setting sendEmail to true.'} If a sheet write fails, recover that run’s saved dataset before collecting again. [Setup and recovery](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/${kind}-to-sheets.md).`,-40,-820,680,660,1));
+ nodes.push(note('setup-section','Configure collection','## Choose what to collect\nFill in Settings before running. Validation stops invalid inputs before starting a billed run.',-40,-130,660,520,7));
+ nodes.push(note('run-section','Wait for one run','## Collect and wait\nPoll the existing run until it finishes. Failed runs stop here; the workflow does not start another run automatically.',640,-130,630,520,7));
+ nodes.push(note('sheet-section','Save complete results','## Save the history\nCheck the run summary, read its saved dataset and write rows to Sheets. Stable row keys let a sheet retry update the same records.',1290,-130,1110,520,7));
+ if(!olive)nodes.push(note('email-section','Optional job digest','## Optional email\nSend one digest for new or changed jobs after Sheets succeeds. Baseline rows do not send alerts. SMTP and addresses are required when email is enabled.',2410,-130,500,520,7));
+
  const workflow={name:olive?'Olive Young Global prices and ranks to Google Sheets':'Greenhouse Lever Ashby job changes to Sheets and email',nodes,connections,active:false,settings:{executionOrder:'v1',timezone:'Etc/UTC',executionTimeout:600,saveExecutionProgress:true},pinData:{},tags:[]};
  fs.writeFileSync(path.join(root,'workflows',`${kind}-to-sheets.json`),JSON.stringify(workflow,null,2)+'\n');
  fs.writeFileSync(path.join(root,'samples',`${kind}-sheet-headers.csv`),headers[kind].join(',')+'\n');

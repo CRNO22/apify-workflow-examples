@@ -8,7 +8,7 @@ Follow selected employers on Greenhouse, Lever or Ashby. Save their job postings
 
 Follow the [account and spreadsheet setup](setup.md). Use the tab name `JobsHistory` and these [column headers](../samples/jobs-sheet-headers.csv).
 
-In **Settings**, put one company board URL per line in `boardUrls`. For example:
+In **Settings**, put one company board URL per line in `boardUrls` (up to 10 boards). For example:
 
 ```text
 https://job-boards.greenhouse.io/figma

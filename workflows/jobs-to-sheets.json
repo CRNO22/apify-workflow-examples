@@ -121,7 +121,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const c=$input.first().json;\nif(!/^[a-zA-Z0-9_-]{20,}$/.test(c.spreadsheetId)||c.spreadsheetId.startsWith('REPLACE_'))throw new Error('Set your Google spreadsheet ID before starting a billed Actor run.');\nif(!c.sheetTab||!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,60}$/.test(c.historyStoreName))throw new Error('Set the sheet tab and a valid history store name.');\nif(!Number.isInteger(c.maxItems)||c.maxItems<1||c.maxItems>1000)throw new Error('maxItems is outside the supported range.');\n\nif(typeof c.maxChargeUsd!=='number'||c.maxChargeUsd<c.maxItems*0.002||c.maxChargeUsd>10)throw new Error('Set maxChargeUsd between maxItems * $0.002 and $10.');\nif(!c.boardUrls?.trim())throw new Error('Set at least one supported job-board URL.');\n\nc.boards=[...new Set(c.boardUrls.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean).map(value=>{\n if(/^(greenhouse|lever|lever-eu|ashby):[A-Za-z0-9_-]+$/.test(value))return value;\n const match=/^https:\\/\\/(boards\\.greenhouse\\.io|job-boards\\.greenhouse\\.io|jobs\\.lever\\.co|jobs\\.eu\\.lever\\.co|jobs\\.ashbyhq\\.com)\\/([A-Za-z0-9_-]+)(?:\\/[A-Za-z0-9_-]+)*\\/?(?:[?#][^\\\\]*)?$/i.exec(value);\n if(!match||match[2]==='embed')throw new Error('Use a direct supported HTTPS board URL, such as https://job-boards.greenhouse.io/figma, or provider:slug.');\n const providers={'boards.greenhouse.io':'greenhouse','job-boards.greenhouse.io':'greenhouse','jobs.lever.co':'lever','jobs.eu.lever.co':'lever-eu','jobs.ashbyhq.com':'ashby'};\n return providers[match[1].toLowerCase()]+':'+match[2];\n}))];\nif(c.boards.length>20)throw new Error('Select at most 20 boards.');\n\nif(c.sendEmail&&(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(c.emailTo)||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(c.emailFrom)))throw new Error('Set valid sender and recipient addresses before enabling email.');\nreturn [{json:c}];",
+        "jsCode": "const c=$input.first().json;\nif(!/^[a-zA-Z0-9_-]{20,}$/.test(c.spreadsheetId)||c.spreadsheetId.startsWith('REPLACE_'))throw new Error('Set your Google spreadsheet ID before starting a billed Actor run.');\nif(!c.sheetTab||!/^[a-zA-Z0-9][a-zA-Z0-9-]{1,60}$/.test(c.historyStoreName))throw new Error('Set the sheet tab and a valid history store name.');\nif(!Number.isInteger(c.maxItems)||c.maxItems<1||c.maxItems>1000)throw new Error('maxItems is outside the supported range.');\n\nif(typeof c.maxChargeUsd!=='number'||c.maxChargeUsd<c.maxItems*0.002||c.maxChargeUsd>10)throw new Error('Set maxChargeUsd between maxItems * $0.002 and $10.');\nif(!c.boardUrls?.trim())throw new Error('Set at least one supported job-board URL.');\n\nc.boards=[...new Set(c.boardUrls.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean).map(value=>{\n if(/^(greenhouse|lever|lever-eu|ashby):[A-Za-z0-9_-]+$/.test(value))return value;\n const match=/^https:\\/\\/(boards\\.greenhouse\\.io|job-boards\\.greenhouse\\.io|jobs\\.lever\\.co|jobs\\.eu\\.lever\\.co|jobs\\.ashbyhq\\.com)\\/([A-Za-z0-9_-]+)(?:\\/[A-Za-z0-9_-]+)*\\/?(?:[?#][^\\\\]*)?$/i.exec(value);\n if(!match||match[2]==='embed')throw new Error('Use a direct supported HTTPS board URL, such as https://job-boards.greenhouse.io/figma, or provider:slug.');\n const providers={'boards.greenhouse.io':'greenhouse','job-boards.greenhouse.io':'greenhouse','jobs.lever.co':'lever','jobs.eu.lever.co':'lever-eu','jobs.ashbyhq.com':'ashby'};\n return providers[match[1].toLowerCase()]+':'+match[2];\n}))];\nif(c.boards.length>10)throw new Error('Select at most 10 boards.');\n\nif(c.sendEmail&&(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(c.emailTo)||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(c.emailFrom)))throw new Error('Set valid sender and recipient addresses before enabling email.');\nreturn [{json:c}];",
         "mode": "runOnceForAllItems"
       }
     },
@@ -525,13 +525,78 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        0,
-        -430
+        -40,
+        -820
       ],
       "parameters": {
-        "width": 1000,
-        "height": 350,
-        "content": "## Job boards → Sheets and email\nCreate the sheet tab with the supplied headers, then fill in Settings. Select your Apify Header Auth credential on all four HTTP nodes and connect Google Sheets. Keep tokens in credentials, not this JSON.\n\nRun a manual test before enabling the daily schedule (09:00 UTC). The first run sets the comparison baseline. Email is off by default; add SMTP and addresses if you want alerts.\n\n100 saved rows cost $0.20; the default run cap is $0.25. Other service/account charges may apply. If a sheet write fails, recover that run’s saved dataset before collecting again.\n\n[Setup guide](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/jobs-to-sheets.md)"
+        "content": "### How it works\nFollow selected Greenhouse, Lever and Ashby job boards in a Google Sheet. Run manually or once a day at 09:00 UTC. The workflow starts an Apify Actor, waits for it to finish, rejects incomplete output, then saves rows by a stable key. Repeating a sheet write for the same run updates those rows.\n\nThe first run sets the comparison baseline. Later runs save newly seen or changed postings. Newly seen does not mean newly published; missing jobs are not classified as closed.\n\n### Setup\n1. Use your own Apify, n8n and Google Sheets accounts. Create a sheet tab with the [supplied headers](https://github.com/CRNO22/apify-workflow-examples/blob/main/samples/jobs-sheet-headers.csv).\n2. Fill in Settings: spreadsheet ID, tab and a unique history-store name. Set boardUrls to supported career-page URLs, one per line (up to 10).\n3. Select an Apify Header Auth credential on all four HTTP nodes: Authorization = Bearer YOUR_TOKEN. Connect Google Sheets OAuth.\n4. Run manually and inspect the saved rows before enabling the schedule. 100 saved rows cost $0.20; the default cap is $0.25. Other account charges may apply.\n\n### Customization\nAdd a keyword filter. Email is off by default; configure SMTP and sender/recipient addresses before setting sendEmail to true. If a sheet write fails, recover that run’s saved dataset before collecting again. [Setup and recovery](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/jobs-to-sheets.md).",
+        "width": 680,
+        "height": 660,
+        "color": 1
+      }
+    },
+    {
+      "id": "setup-section",
+      "name": "Configure collection",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -130
+      ],
+      "parameters": {
+        "content": "## Choose what to collect\nFill in Settings before running. Validation stops invalid inputs before starting a billed run.",
+        "width": 660,
+        "height": 520,
+        "color": 7
+      }
+    },
+    {
+      "id": "run-section",
+      "name": "Wait for one run",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -130
+      ],
+      "parameters": {
+        "content": "## Collect and wait\nPoll the existing run until it finishes. Failed runs stop here; the workflow does not start another run automatically.",
+        "width": 630,
+        "height": 520,
+        "color": 7
+      }
+    },
+    {
+      "id": "sheet-section",
+      "name": "Save complete results",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1290,
+        -130
+      ],
+      "parameters": {
+        "content": "## Save the history\nCheck the run summary, read its saved dataset and write rows to Sheets. Stable row keys let a sheet retry update the same records.",
+        "width": 1110,
+        "height": 520,
+        "color": 7
+      }
+    },
+    {
+      "id": "email-section",
+      "name": "Optional job digest",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2410,
+        -130
+      ],
+      "parameters": {
+        "content": "## Optional email\nSend one digest for new or changed jobs after Sheets succeeds. Baseline rows do not send alerts. SMTP and addresses are required when email is enabled.",
+        "width": 500,
+        "height": 520,
+        "color": 7
       }
     }
   ],

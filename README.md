@@ -9,6 +9,8 @@ Save Olive Young Global prices and ranks to Google Sheets, or follow job posting
 
 The templates are free to download. You’ll need your own Apify, n8n and Google Sheets accounts. Import a workflow, connect your credentials and run a manual test before enabling its daily schedule. [Setup and troubleshooting](docs/setup.md).
 
+For a one-off export, choose a [ready-to-run Apify example](docs/examples.md): skincare ranks, suncare prices, Figma design roles or OpenAI jobs.
+
 ## Cost
 
 Both Actors charge **$2 per 1,000 saved rows**: 100 results cost **$0.20**. The templates start with a $0.25 run cap. n8n hosting, email and later Apify account storage/API use may cost extra. Rates checked on 12 November 2026; the Actor pricing tabs show the current prices.

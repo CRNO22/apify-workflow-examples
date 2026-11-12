@@ -526,13 +526,62 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        0,
-        -430
+        -40,
+        -820
       ],
       "parameters": {
-        "width": 1000,
-        "height": 350,
-        "content": "## Olive Young → Sheets\nCreate the sheet tab with the supplied headers, then fill in Settings. Select your Apify Header Auth credential on all four HTTP nodes and connect Google Sheets. Keep tokens in credentials, not this JSON.\n\nRun a manual test before enabling the daily schedule (09:00 UTC). The first run sets the comparison baseline. Keep maxItems at 100 for a complete ranking.\n\n100 saved rows cost $0.20; the default run cap is $0.25. Other service/account charges may apply. If a sheet write fails, recover that run’s saved dataset before collecting again.\n\n[Setup guide](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/oliveyoung-to-sheets.md)"
+        "content": "### How it works\nRecord Olive Young Global bestseller prices and ranks in a Google Sheet. Run manually or once a day at 09:00 UTC. The workflow starts an Apify Actor, waits for it to finish, rejects incomplete output, then saves rows by a stable key. Repeating a sheet write for the same run updates those rows.\n\nThe first run sets the comparison baseline. Later runs compare the same ranking. This covers Global listing prices, not Korean-store prices or sales volume.\n\n### Setup\n1. Use your own Apify, n8n and Google Sheets accounts. Create a sheet tab with the [supplied headers](https://github.com/CRNO22/apify-workflow-examples/blob/main/samples/oliveyoung-sheet-headers.csv).\n2. Fill in Settings: spreadsheet ID, tab and a unique history-store name. Keep maxItems at 100 for a complete ranking.\n3. Select an Apify Header Auth credential on all four HTTP nodes: Authorization = Bearer YOUR_TOKEN. Connect Google Sheets OAuth.\n4. Run manually and inspect the saved rows before enabling the schedule. 100 saved rows cost $0.20; the default cap is $0.25. Other account charges may apply.\n\n### Customization\nChange the schedule to suit your reporting cycle. If a sheet write fails, recover that run’s saved dataset before collecting again. [Setup and recovery](https://github.com/CRNO22/apify-workflow-examples/blob/main/docs/oliveyoung-to-sheets.md).",
+        "width": 680,
+        "height": 660,
+        "color": 1
+      }
+    },
+    {
+      "id": "setup-section",
+      "name": "Configure collection",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -130
+      ],
+      "parameters": {
+        "content": "## Choose what to collect\nFill in Settings before running. Validation stops invalid inputs before starting a billed run.",
+        "width": 660,
+        "height": 520,
+        "color": 7
+      }
+    },
+    {
+      "id": "run-section",
+      "name": "Wait for one run",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -130
+      ],
+      "parameters": {
+        "content": "## Collect and wait\nPoll the existing run until it finishes. Failed runs stop here; the workflow does not start another run automatically.",
+        "width": 630,
+        "height": 520,
+        "color": 7
+      }
+    },
+    {
+      "id": "sheet-section",
+      "name": "Save complete results",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1290,
+        -130
+      ],
+      "parameters": {
+        "content": "## Save the history\nCheck the run summary, read its saved dataset and write rows to Sheets. Stable row keys let a sheet retry update the same records.",
+        "width": 1110,
+        "height": 520,
+        "color": 7
       }
     }
   ],
